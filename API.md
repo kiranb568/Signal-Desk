@@ -6,8 +6,9 @@ These are proposed interfaces for the hosted backend. They are **not implemented
 
 | Method and path | Purpose |
 |---|---|
-| `GET /api/v1/health` | Service status, provider connection state, feed timestamp and staleness. |
+| `GET /api/v1/health` | Service status, per-provider connection state, feed timestamp, selected data mode, and staleness. |
 | `GET /api/v1/market/bars?symbol=NIFTY&interval=1m&limit=300` | OHLCV bars, timezone, source, and last complete candle. Intervals: `1m`, `5m`, `15m`. |
+| `GET /api/v1/market/context?symbol=NIFTY&session=today` | Previous session close, pre-open snapshot, gap, and latest index observation with separate source timestamps. |
 | `GET /api/v1/market/chain?underlying=NIFTY&expiry=...` | Calls/puts with strike, bid/ask and sizes, IV, OI, OI change, LTP, timestamp, and source. |
 | `GET /api/v1/signals/today` | One-shot result, rule/config version, indicator inputs, rationale, eligibility, red flags, and data freshness. Return `no_trade` when any required condition is unknown or stale. |
 | `GET /api/v1/scanner?limit=20` | Ranked alternatives with score breakdown, spread, risk levels, and chart/deep link. |
@@ -22,7 +23,7 @@ These are proposed interfaces for the hosted backend. They are **not implemented
 | `GET /api/v1/settings` | Current user's versioned parameters and safety toggles. |
 | `PUT /api/v1/settings` | Validate and persist settings; record actor, timestamp, and new version. |
 | `POST /api/v1/connections/market-data` | Begin dashboard-managed provider authorization; return an OAuth redirect/status, not a secret. |
-| `POST /api/v1/connections/broker` | Begin broker authorization/sandbox selection. Keep refresh/access tokens in a secret store. |
+| `POST /api/v1/connections/broker` | Accept `{provider, provider_label?, return_to, scope:"market_data"}` and return a broker `authorization_url`; perform OAuth code exchange on the server and store tokens encrypted. Support Upstox, Zerodha Kite, DhanHQ, FYERS, Angel One, Alice Blue, Kotak Neo, ICICI Direct, and separately built custom adapters. |
 | `DELETE /api/v1/connections/{provider}` | Revoke the provider connection and disable dependent actions. |
 
 ## Paper replay and orders
@@ -68,3 +69,10 @@ The dashboard's TradingView widget is a visual chart only; its values must not b
 ## Exact one-shot rule handling
 
 The server should only mark `eligible=true` after all strategy filters pass on completed candles and a fresh option quote: a completed 20/200 EMA cross; volume at least 1.5 times the prior five completed bars' average; aligned SuperTrend; spread no greater than 0.5%; a thin-liquidity/spike guard; stop no wider than 5 option points; total position spend no greater than ₹10,000; and no prior primary recommendation that session. The browser separately requires every named validation flag plus `one_shot_available=true`. On an early stop (first 3 minutes), if reversal volume exceeds 2 times its reference average, set `trap_cooldown=false` to indicate an active block and do not issue another entry that session; `true` means no active trap block. Avoid relying on the TradingView iframe for any of these calculations.
+## GitHub Pages and broker setup
+
+GitHub Pages only hosts static assets. It cannot safely perform OAuth code exchanges, keep broker secrets, poll private broker feeds, or serve the `/api/v1/*` routes. Keep `index.html` on Pages, but point **Signal service URL** at a separate HTTPS backend. Configure the broker app keys/secrets and callback URL in that backend's secret store, not in this page, GitHub Pages files, or browser local storage. The browser asks the service to start broker authorization; the service redirects through the broker and handles the callback/token exchange. After the account connects, the service uses that broker adapter for quotes, candles, option chain, and optional user order/position data.
+
+The dashboard can request prior-session + pre-open + delayed intraday context, or previous-session context only. `data_mode`, `max_data_age_minutes`, `expiry_preference`, `strike_preference`, and strategy limits are persisted by `PUT /api/v1/settings`. The service must return explicit timestamps per source and must not pretend previous-session data is current. A pre-open-only snapshot cannot satisfy an intraday entry rule: until a current completed candle and option quote are within the configured max age, return `eligible=false`.
+
+Broker adapters are provider-specific and must be implemented/tested against the provider's official API. Upstox requires a server-side code-to-token exchange and client secret; Dhan individual API tokens expire and its docs state that Data APIs can carry additional charges. Do not promise a “free broker feed” until the account's entitlement and API pricing confirm it. The dashboard's broker picker does not itself create those server adapters.

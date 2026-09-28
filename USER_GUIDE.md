@@ -50,3 +50,10 @@ The requested 95% hit rate is not a valid promise or a safe default. Validate an
 ## External chart source
 
 The dashboard embeds TradingView's NIFTY chart as a display-only chart. It is not used by the rule engine. TradingView states that its widgets can be delayed, cannot export/download their data, and have no API for retrieving chart data; its data terms also restrict automated/non-display use. Investing.com says it does not provide public API access, while Yahoo's terms restrict automated collection without express prior permission. For computations (signals, backtests, options chain, OI, liquidity, and sizing), connect an exchange-authorized provider through the hosted service API instead.
+## GitHub Pages and broker connectivity
+
+The published GitHub Pages URL is a static front end. Recent dashboard updates add a TradingView symbol-editable chart, data-context preferences, broker selection, a secure broker sign-in hand-off, and automatic refresh. The live signal, broker login, options data, and analytics still need an HTTPS Signal Desk API service. The browser never stores broker credentials; the backend needs a provider-specific adapter and secure secret store.
+
+In Settings, choose a data context, max quote age (1–15 minutes), expiry/strike preference, and a supported broker. Enter the Signal service URL and connect it. Broker sign-in redirects to the selected broker only when that server route is implemented. For “Other,” the service must have a custom adapter; typing a broker label does not make the provider API compatible. Options and market-data entitlements vary by broker and account. A pre-open or prior-close-only snapshot is context, not a valid intraday entry trigger; the dashboard will show no trade when the live quote/candle is stale.
+
+The page files have been updated in the workspace, but they are not committed or published from here: this workspace has no Git repository or remote. GitHub Pages will continue to serve its current build until the updated files are deployed to the repository. No credentials or GitHub account changes were made.
