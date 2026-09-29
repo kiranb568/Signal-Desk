@@ -2,7 +2,7 @@
 
 ## What this preview does
 
-This workspace contains the dashboard front end and a documented service API contract. No public dashboard URL or service deployment is configured yet. The embedded TradingView chart is display-only. Actual quotes, calculated recommendations, scanner rankings, and historical performance require a hosted API connected to an authorized data source.
+This GitHub repository contains the static dashboard front end and a documented service API contract. GitHub Pages can publish the page, but this repository does not contain or deploy the hosted Signal Desk API. TradingView chart, technical summary, India equity screener, and options-chain link provide manual, display-only context. Actual quotes, calculated recommendations, F&O scanner rankings, and historical performance require a hosted API connected to an authorized data source.
 
 ## One-shot rule
 
@@ -56,4 +56,9 @@ The published GitHub Pages URL is a static front end. Recent dashboard updates a
 
 In Settings, choose a data context, max quote age (1–15 minutes), expiry/strike preference, and a supported broker. Enter the Signal service URL and connect it. Broker sign-in redirects to the selected broker only when that server route is implemented. For “Other,” the service must have a custom adapter; typing a broker label does not make the provider API compatible. Options and market-data entitlements vary by broker and account. A pre-open or prior-close-only snapshot is context, not a valid intraday entry trigger; the dashboard will show no trade when the live quote/candle is stale.
 
-The page files have been updated in the workspace, but they are not committed or published from here: this workspace has no Git repository or remote. GitHub Pages will continue to serve its current build until the updated files are deployed to the repository. No credentials or GitHub account changes were made.
+The current client includes Equity/F&O selection and sends the selected asset class and NSE symbol to `GET /api/v1/signals/today`; supporting market requests are scoped to that symbol. These changes are local until committed and pushed to the connected GitHub repository, after which GitHub Pages can publish them. No backend, provider authorization, or broker adapter is included here.
+## Equity and F&O insight widgets
+
+The **Equity & F&O insights** tab contains TradingView's India stock screener; its built-in filter bar and columns are editable in the dashboard. On Overview, choose one of the supported NSE indices/equities to update the chart and general technical-summary widget at 1m, 5m, or 15m. The chart embed uses a direct, explicit NSE:* symbol URL with symbol editing disabled in the frame, preventing an inherited AAPL/default symbol from taking over. The selected underlying's TradingView options-chain page opens from the Markets tab. Choose **Equity intraday** or **F&O options** in Settings before connecting; this choice and the selected symbol are sent to the service. The backend must implement the documented asset-aware response contract for equity recommendations.
+
+These free widgets give visual market context only. Their delayed ratings and screener rows cannot be read by the dashboard's signal engine. The one-shot card and F&O scanner still require the configured service to return fresh, licensed candles and contract quotes with OI, spread, and size. Equity buy/sell recommendations likewise require a connected evaluation feed; the screener is not represented as an order recommendation.
